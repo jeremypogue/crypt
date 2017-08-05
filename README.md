@@ -1,46 +1,70 @@
 # crypt
 
-You can use crypt as a command line tool or as a configuration library:
+## Install
 
-* [crypt cli](bin/crypt)
-* [crypt/config](config)
-
-## Demo
-
-Watch Kelsey explain `crypt` in this quick 5 minute video:
-
-[![Crypt Demonstration Video](https://img.youtube.com/vi/zYpqqfuGwW8/0.jpg)](https://www.youtube.com/watch?v=zYpqqfuGwW8)
-
-## Generating gpg keys and keyrings
-
-The crypt cli and config package require gpg keyrings. 
-
-### Create a key and keyring from a batch file
+### Binary release
 
 ```
-vim app.batch
+wget https://github.com/xordataexchange/crypt/releases/download/v0.0.1/crypt-0.0.1-linux-amd64
+mv crypt-0.0.1-linux-amd64 /usr/local/bin/crypt
+chmod +x /usr/local/bin/crypt
 ```
 
-```
-%echo Generating a configuration OpenPGP key
-Key-Type: default
-Subkey-Type: default
-Name-Real: app
-Name-Comment: app configuration key
-Name-Email: app@example.com
-Expire-Date: 0
-%pubring .pubring.gpg
-%secring .secring.gpg
-%commit
-%echo done
-```
-
-Run the following command:
+### go install
 
 ```
-gpg2 --batch --armor --gen-key app.batch
+go install github.com/xordataexchange/crypt/bin/crypt
 ```
 
-You should now have two keyrings, `.pubring.gpg` which contains the public keys, and `.secring.gpg` which contains the private keys.
+## Backends
 
-> Note the private key is not protected by a passphrase.
+crypt supports etcd and consul as backends via the `-backend` flag.
+
+## Usage
+
+```
+usage: crypt COMMAND [arg...]
+
+commands:
+   get  retrieve the value of a key
+   set  set the value of a key
+```
+
+### Encrypted and set a value
+
+```
+usage: crypt set [args...] key file
+  -backend="etcd": backend provider
+  -endpoint="": backend url
+  -keyring=".pubring.gpg": path to armored public keyring
+```
+
+Example:
+
+```
+crypt set -keyring pubring.gpg /app/config config.json 
+```
+
+### Retrieve and decrypted a value
+
+```
+usage: crypt get [args...] key
+  -backend="etcd": backend provider
+  -endpoint="": backend url
+  -secret-keyring=".secring.gpg": path to armored secret keyring
+```
+
+Example:
+
+```
+crypt get -secret-keyring secring.gpg /app/config
+```
+
+### Support for unencrypted values
+```
+crypt set -plaintext ...
+crypt get -plaintext ...
+```
+Crypt now has support for getting and setting plain unencrypted values, as
+a convenience.  This was added to the backend libraries so it could be exposed
+in spf13/viper. Use the -plaintext flag to get or set a value without encryption. 
